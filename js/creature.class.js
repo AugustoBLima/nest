@@ -6,12 +6,13 @@ console.log('imported creature.class.js');
 
 class Creature {
 
-	initial_point = point(0);
-
-	initial_lobus = new Lobus();
+	initial_point = point(50,50);
 
 	constructor() {
 
+		this.lobus = new Lobus({
+			initial_point : this.initial_point
+		});
 	}
 
 	get property() {
@@ -20,40 +21,41 @@ class Creature {
 	set property(p) {
 		this._property = p;
 	}
+
+
 	
 }
 
 
 class Lobus {
-
-	initial_point = point(50);
-	vel = 1;
-	acc = 0.001;
-	jrk = 0.0;
-	initial_radius = 12;
-	vel_r = -0.01;
-	acc_r = 0;
-	nodes = [];
-	extensions = [];
-
-	max_length = 800;
+	
+	max_length = 450;
 	max_radius = 50;
 
-	constructor() {
+	constructor( instructions = false ) {
+
+		this.pixelmap = newPixelmap( 250, 500, false, false );
+
+		this.initial_point = instructions.initial_point || point(2,20);
+		this.vel = instructions.vel || 0;
+		this.acc = instructions.acc || 0.002;
+		this.jrk = instructions.jrk || 0;
+		this.initial_radius = instructions.initial_radius || 4;
+		this.vel_r = instructions.vel_r || 0.0;
+		this.acc_r = instructions.acc_r || 0.0;
+		this.nodes = instructions.nodes || [];
+		this.extensions = instructions.extensions || [];
 
 	}
 
-	cast( pixelmap ) {
-
-		if ( pixelmap == undefined ) return errr('pixelmap undefined');
+	cast() {
 
 		// RGB
-		if ( pixelmap.rgb ) return errr('pixelmap is rgb', pixelmap);
-		this.pixelmap = pixelmap;
+		if ( this.pixelmap.rgb ) return errr('pixelmap is rgb', pixelmap);
 
 		this.within_pixelmap = true;
 
-		let rate = 20;
+		let rate = 2;
 
 		let length = 0;
 		let node = {};
@@ -73,6 +75,8 @@ class Lobus {
 			node.point[1] += Math.cos( node.vel ) * rate;
 			node.vel += node.acc * rate;
 			node.acc += this.jrk * rate;
+
+			//node.vel_r += (node.point[0] % 100)/100000 - (node.point[1] % 100)/100000;
 			//----node.vel = normalize( node.vel, 1 );
 
 			node.radius += node.vel_r * rate;
@@ -94,40 +98,62 @@ class Lobus {
 		if ( pixelmap.rgb ) return errr('pixelmap is rgb', pixelmap);
 		this.pixelmap = pixelmap;
 
+		this.within_pixelmap = true;
+
+		let rate = 2;
+
 		let length = 0;
-		let current_point = this.initial_point;
-		let current_radius = this.initial_radius;
+		let node = {};
+		node.point = this.initial_point;
+		node.radius = this.initial_radius;
 
-		let current_vel = this.vel;
-		let current_vel_r = this.vel_r;
+		node.vel = this.vel;
+		node.acc = this.acc;
+		node.vel_r = this.vel_r;
 
-		while ( length < this.max_length && current_radius > 0 && current_radius < this.max_radius ) {
+		while ( length < this.max_length && node.radius > 0 && node.radius < this.max_radius && this.within_pixelmap ) {
 
-			this.draw_circle( current_point, current_radius );
+			this.draw_circle( node.point, node.radius );
+			if ( this.within_pixelmap ) this.nodes.push( JSON.parse(JSON.stringify(node)) );
 
-			current_point[0] += current_vel[0];
-			current_point[1] += current_vel[1];
-			current_vel[0] += this.acc[0];
-			current_vel[1] += this.acc[1];
-			current_vel = normalize( current_vel );
-			console.log(current_vel);
+			node.point[0] += Math.sin( node.vel ) * rate;
+			node.point[1] += Math.cos( node.vel ) * rate;
+			node.vel += node.acc * rate;
+			node.acc += this.jrk * rate;
 
-			current_radius += current_vel_r;
-			current_vel_r += this.acc_r;
+			node.vel_r += (node.point[0] % 100)/10000 - (node.point[1] % 100)/10000;
+			//----node.vel = normalize( node.vel, 1 );
 
-			length += Math.sqrt( current_vel[0] * current_vel[0] + current_vel[1] * current_vel[1] ) ;
+			node.radius += node.vel_r * rate;
+			node.vel_r += this.acc_r * rate;
+
+			//length += Math.sqrt( node.vel[0] * node.vel[0]  + node.vel[1] * node.vel[1] ) * rate;
+			length += rate;
 		}
 
 		return this.pixelmap;
 
 	}
 
-	growLobus( node = this.nodes[ Math.floor(Math.random() * myArray.length) ], instructions = this.extensions.instructions, ) {
+	growLobus( node = this.nodes[ Math.floor(Math.random() * this.nodes.length) ], sett = false ) {
 
-		let extension = new Lobus();
+		let extension = new Lobus( node );
 		extension.base = node;
 
+		extension.acc = extension.acc * -1;
+		extension.initial_point = node.point;
+		extension.initial_radius = node.radius;
+
 		this.extensions.push( extension );
+	}
+
+	cast_circle( point, radius ) {
+
+		let valid = true;
+		valid = valid && cast_pixel( point[0] + radius, point[1] + radius );
+		valid = valid && cast_pixel( point[0] + radius, point[1] - radius );
+		valid = valid && cast_pixel( point[0] - radius, point[1] - radius );
+		valid = valid && cast_pixel( point[0] - radius, point[1] + radius );
 	}
 
 	draw_circle( point, radius ) {
@@ -168,8 +194,13 @@ class Lobus {
 		}
 	}
 
+	cast_pixel( x, y ) {
+		return ( /* x > 0 mirror */ true && y > 0 && x+1 < this.pixelmap.width && y+1 < this.pixelmap.height );
+	}
+
 	draw_pixel( x, y ) {
-		if ( !this.pixelmap.set( x, y, 100) ) this.within_pixelmap = false;
+		//console.log('x:' + x + '|y:' + y );
+		if ( !this.pixelmap.set( x, y, Math.random() * 100) ) this.within_pixelmap = false;
 	}
 
 	
