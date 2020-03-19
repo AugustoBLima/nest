@@ -1,0 +1,45 @@
+# initial point x axis					] backbone
+# initial point y axis
+# initial radius
+# initial radius vel
+# initial radius acc
+
+# much lobuses growing					] grow tentacle
+# minimum node distance from last
+# impact of distance from start
+# initial radius
+# initial radius vel
+# initial radius acc
+
+# initial vel
+# initial acc
+
+
+
+
+
+# much lobuses growing					] grow details
+# minimum node distance from last
+# impact of distance from start
+# initial radius
+# initial radius vel
+# initial radius acc
+# max legth
+# direction relative to the angle (radius acc)
+
+# which sides of the tentacle to fill
+
+
+
+
+
+
+TO DO
+
+- Color paletes
+- grow boddy
+- fix seed length (while)
+- avoid lobuses reaching borders by role
+- implement offset attr as depth 
+- Eyes
+- Color textures

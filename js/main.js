@@ -5,15 +5,12 @@ console.log('starting main.js');
 
 
 
-var bixo = new Lobus();
+var genome = new Genotype();
+var bixo = new Creature( genome );
 
-pixelmapToCanvas( bixo.cast() );
+//bixo.backbone.grow_lobus();
+//bixo.backbone.draw();
 
-pixelmapToCanvas(bixo.pixelmap);
-
-bixo.pixelmap = bixo.pixelmap.mirror()
-
-pixelmapToCanvas(bixo.pixelmap);
 
 
 
