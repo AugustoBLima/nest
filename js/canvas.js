@@ -2,6 +2,8 @@ console.log('imported canvas.js');
 
 function pixelmapToCanvas(pixelmap, canvas = document.querySelector("canvas")) {
 
+    console.log(pixelmap);
+
     // mirror
     let mirrored = [];
     let width = pixelmap.length;
@@ -41,6 +43,7 @@ function pixelmapToCanvas(pixelmap, canvas = document.querySelector("canvas")) {
     for(var x = 0; x < height2; x++) {
         for(var y = 0; y < width2; y++) {
             var s = 4 * x * w + 4 * y;  // calculate the index in the array
+            //console.log(y);
             var pixel = pixelmap[y][x];  // the RGB values
             if ( !Array.isArray(pixel) ) pixel = [pixel,pixel,pixel];
             data[s] = pixel[0];

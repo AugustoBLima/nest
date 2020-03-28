@@ -30,7 +30,10 @@
 # which sides of the tentacle to fill
 
 
-
+# color darkeness1
+# color darkeness2
+# color 1
+# color 2
 
 
 

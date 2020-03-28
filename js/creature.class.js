@@ -17,6 +17,8 @@ for (var i = 0; i < 10; i++) {
 class Creature {
 
 	seed = '';
+	color1 = [];
+	color2 = [];
 
 	constructor( genotype = false ) {
 
@@ -36,16 +38,16 @@ class Creature {
 				this.init();
 			}
 		}
-
-		for (var i = 0; i < 10; i++) {
+		while ( this.seed.length < 35 ) {
 			this.seed += Math.random().toString().replace('0.','');
-			//this.seed += Math.random().toString(36).substring(2);
 		}
+		this.seed = this.seed.substr(0,35) + Math.floor( Math.random() * 6 ) + Math.floor( Math.random() * 6 );
 
 		console.log('seed|' + this.seed);
 		//this.seed = '28234655471201921873881310670309680965279194369428905102998471828746561074031525197226839335538975335209839988777303379412397996043517423417456098049388421243286906';
 		//this.seed = '641677448368058327102138887967338549473564943759759664221560180829331008517121426659710899718568351280812951810573428360802967882578513981238569619322050146843532';
 		//this.seed = '60068472800937945320983718342762308273002088884298006549301603423437690641986615350245831209187471628972467130947635179970000903141655482542061069489675862016274';
+		this.seed = '7122831540857373917501795580206739303';
 
 	}
 
@@ -59,12 +61,16 @@ class Creature {
 		});
 		this.backbone.attach(this);
 
+		this.define_colors();
+
 		this.backbone.cast();
 		this.backbone.grow_tentacles();
 		this.backbone.grow_body();
 		this.backbone.grow_details();
 
 		this.backbone.draw();
+
+		pixelmapToCanvas( this.pixelmap );
 	}
 
 	allele( position, power = 1 ) {
@@ -76,6 +82,25 @@ class Creature {
 		return ( allele / (10 - 1) ) * ( gene[1] - gene[0] ) + gene[0];
 		//return ( allele / (36 - 1) ) * ( gene[1] - gene[0] ) + gene[0];
 	}
+
+	define_colors() {
+
+		let color_line1 = 3 * this.allele(35) + Math.floor( Math.random() * 3 );
+
+		for (var i = 0; i < 10; i++) {
+			this.color1.push( palette[color_line1][i + this.allele(34)] );
+			this.color1[i][3] = [i, window.c_lobus];
+		}
+
+
+		let color_line2 = ( this.allele(36) > 5 ) ? color_line1 : 3 * this.allele(36) + Math.floor( Math.random() * 3 );
+
+		for (var i = 0; i < 10; i++) {
+			this.color2.push( palette[color_line2][i + this.allele(34)] );
+			this.color2[i][3] = [i, window.c_lobus];
+		}
+
+	}
 	
 }
 
@@ -85,7 +110,7 @@ class Lobus {
 	max_radius = 50;
 	min_radius = 5;
 
-	cast_rate = 2;
+	cast_rate = 15;
 	offset = 0;
 	rotation = 0;
 
@@ -107,6 +132,8 @@ class Lobus {
 		this.allele = function( argument ){
 			return Creature.prototype.allele.apply( this.creature, arguments);
 		}
+
+
 	}
 
 	cast() {
@@ -182,7 +209,7 @@ class Lobus {
 			//this.nodes[i]
 		}
 
-		pixelmapToCanvas( this.pixelmap );
+		//pixelmapToCanvas( this.pixelmap );
 
 	}
 
@@ -250,6 +277,7 @@ class Lobus {
 					initial_radius : this.allele(10),
 					vel_r : 2 * this.allele(11),
 					acc_r : 2 * this.allele(12),
+					max_radius : 50 * 1.0,
 				}
 				//console.log('growing');
 				this.grow_lobus( this.nodes[node_index], instructions );
@@ -386,6 +414,8 @@ class Lobus {
 
 	draw_circle( point, radius ) {
 
+		let color = ( this.role == 'body' || this.role == 'tentacle' ) ? this.creature.color1 : this.creature.color2;
+
 		for (var i_radius = 0; i_radius < radius; i_radius++) {
 
 			let _x = i_radius - 1;
@@ -396,21 +426,22 @@ class Lobus {
 	        
 	        let radius_ratio = i_radius/length;
 
-	        let i_color = Math.round( ( radius - i_radius ) /2 );
+	        let i_color = 0;
+	        //i_color = Math.round( ( radius - i_radius ) * 2 );
 	        i_color = i_color > 9 ? 9 : i_color;
 	        
 	        while ( _x >= _y ) {
 
 	        	//console.log( '_x=' + _x + '|_y=' + _y );
 	            
-	            this.draw_pixel( point[0] + _x, point[1] + _y, window.colors[i_color] )
-	            this.draw_pixel( point[0] + _y, point[1] + _x, window.colors[i_color] )
-	            this.draw_pixel( point[0] - _y, point[1] + _x, window.colors[i_color] )
-	            this.draw_pixel( point[0] - _x, point[1] + _y, window.colors[i_color] )
-	            this.draw_pixel( point[0] - _x, point[1] - _y, window.colors[i_color] )
-	            this.draw_pixel( point[0] - _y, point[1] - _x, window.colors[i_color] )
-	            this.draw_pixel( point[0] + _y, point[1] - _x, window.colors[i_color] )
-	            this.draw_pixel( point[0] + _x, point[1] - _y, window.colors[i_color] )
+	            this.draw_pixel( point[0] + _x, point[1] + _y, color[i_color] )
+	            this.draw_pixel( point[0] + _y, point[1] + _x, color[i_color] )
+	            this.draw_pixel( point[0] - _y, point[1] + _x, color[i_color] )
+	            this.draw_pixel( point[0] - _x, point[1] + _y, color[i_color] )
+	            this.draw_pixel( point[0] - _x, point[1] - _y, color[i_color] )
+	            this.draw_pixel( point[0] - _y, point[1] - _x, color[i_color] )
+	            this.draw_pixel( point[0] + _y, point[1] - _x, color[i_color] )
+	            this.draw_pixel( point[0] + _x, point[1] - _y, color[i_color] )
 	            
 	            if ( err <= 0 ) {
 	                _y += 1;
