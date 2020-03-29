@@ -20,6 +20,11 @@ class Creature {
 	color1 = [];
 	color2 = [];
 
+	frames = [];
+	total_frames = 20;
+	current_frame = 0;
+	frame_duration = 80;
+
 	constructor( genotype = false ) {
 
 		//pixelmapToCanvas(this.pixelmap);
@@ -47,31 +52,62 @@ class Creature {
 		//this.seed = '28234655471201921873881310670309680965279194369428905102998471828746561074031525197226839335538975335209839988777303379412397996043517423417456098049388421243286906';
 		//this.seed = '641677448368058327102138887967338549473564943759759664221560180829331008517121426659710899718568351280812951810573428360802967882578513981238569619322050146843532';
 		//this.seed = '60068472800937945320983718342762308273002088884298006549301603423437690641986615350245831209187471628972467130947635179970000903141655482542061069489675862016274';
-		this.seed = '7122831540857373917501795580206739303';
+		//this.seed = '7122831540857373917501795580206739241';
+		//this.seed = '1081598677069389796413362031165249231';
+		//this.seed = '9063604368038891432983290252425779001';
 
 	}
 
-	init(){
+	init() {
 
-		this.pixelmap = newPixelmap( 501, 1001, true, false );
+		for ( var framei = 0; framei < this.total_frames; framei++ ) {
 
-		this.backbone = new Backbone( this.pixelmap, {
-			initial_point : this.initial_point,
-			creature : this
-		});
-		this.backbone.attach(this);
+			this.pixelmap = newPixelmap( 301, 601, true, false );
 
-		this.define_colors();
+			this.backbone = new Backbone( this.pixelmap, {
+				initial_point : this.initial_point,
+				creature : this
+			});
+			this.backbone.attach(this);
 
-		this.backbone.cast();
-		this.backbone.grow_tentacles();
-		this.backbone.grow_body();
-		this.backbone.grow_details();
+			this.define_colors();
 
-		this.backbone.draw();
+			this.backbone.cast();
+			this.backbone.grow_tentacles();
+			this.backbone.grow_body();
+			this.backbone.grow_details();
 
-		pixelmapToCanvas( this.pixelmap );
+			this.backbone.draw();
+
+			this.frames.push( this.pixelmap );
+
+			this.current_frame++;
+
+		}
+
+		this.current_frame= 0;
+
+		this.loop_frames();
+		//pixelmapToCanvas( this.pixelmap );
+
 	}
+
+
+	loop_frames() {
+		var creature = this;
+		this.loop = setInterval(function(self = creature){
+
+			pixelmapToCanvas( self.frames[ self.current_frame++ ] );
+
+			if ( self.current_frame == self.total_frames ) self.current_frame = 0; 
+
+		}, this.frame_duration );
+	}
+
+	stop_loop() {
+		clearInterval( this.loop );
+	}
+
 
 	allele( position, power = 1 ) {
 
@@ -92,7 +128,6 @@ class Creature {
 			this.color1[i][3] = [i, window.c_lobus];
 		}
 
-
 		let color_line2 = ( this.allele(36) > 5 ) ? color_line1 : 3 * this.allele(36) + Math.floor( Math.random() * 3 );
 
 		for (var i = 0; i < 10; i++) {
@@ -106,11 +141,11 @@ class Creature {
 
 class Lobus {
 	
-	max_length = 1500;
-	max_radius = 50;
+	max_length = 500;
+	max_radius = 40;
 	min_radius = 5;
 
-	cast_rate = 15;
+	cast_rate = 5;
 	offset = 0;
 	rotation = 0;
 
@@ -122,7 +157,7 @@ class Lobus {
 
 		if ( instructions ) Object.assign( this, instructions );
 
-		this.pixelmap = pixelmap || newPixelmap( 500, 1000, false, false );
+		this.pixelmap = pixelmap;
 		this.attach( instructions.creature );
 
 	}
@@ -133,6 +168,13 @@ class Lobus {
 			return Creature.prototype.allele.apply( this.creature, arguments);
 		}
 
+		let middle = creature.total_frames / 2;
+
+		if ( creature.current_frame < middle ) {
+			this.mov_factor = creature.current_frame / middle;
+		} else {
+			this.mov_factor = ( creature.total_frames - creature.current_frame ) / middle;
+		}
 
 	}
 
@@ -272,7 +314,7 @@ class Lobus {
 
 					vel : vel,
 					acc : acc,
-					jrk : acc * -0.005,
+					jrk : acc * -0.005 * ( 1 + this.mov_factor ),
 
 					initial_radius : this.allele(10),
 					vel_r : 2 * this.allele(11),
@@ -479,8 +521,8 @@ class Lobus {
 
 class Backbone extends Lobus {
 
-	max_length = 500;
-	max_radius = 150;
+	max_length = 300;
+	max_radius = 120;
 	min_radius = 5;
 
 	role = 'body';

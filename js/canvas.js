@@ -2,7 +2,7 @@ console.log('imported canvas.js');
 
 function pixelmapToCanvas(pixelmap, canvas = document.querySelector("canvas")) {
 
-    console.log(pixelmap);
+    //console.log(pixelmap);
 
     // mirror
     let mirrored = [];
